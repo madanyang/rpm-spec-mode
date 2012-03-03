@@ -1,5 +1,7 @@
 ;;; rpm-spec-mode.el --- RPM spec file editing commands for Emacs/XEmacs
 
+;; Copyright (C) 2012 	   Togan Muftuoglu <toganm@opensuse.org>
+
 ;; Copyright (C) 1997-2002 Stig Bjørlykke, <stigb@tihlde.org>
 
 ;; Author:   Stig Bjørlykke, <stigb@tihlde.org>
