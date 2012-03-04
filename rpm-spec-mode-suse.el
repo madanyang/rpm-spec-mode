@@ -217,7 +217,8 @@ value returned by function `user-mail-address'."
   :type 'integer
   :group 'rpm-spec)
 
-(defcustom rpm-spec-default-build-section ""
+(defcustom rpm-spec-default-build-section
+  "make %{?_smp_mflags}"
   "*Default %build section in new spec files."
   :type 'string
   :group 'rpm-spec)
@@ -362,7 +363,9 @@ value returned by function `user-mail-address'."
 (defvar rpm-tags-list
   ;; From RPM 4.4.9 sources, file build/parsePreamble.c: preambleList[], and
   ;; a few macros that aren't tags, but useful here.
-  ;; TODO Also add openSUSE related macros to make my life easy
+  ;; TODO Also add openSUSE related macros
+  ;; TODO remove unneeded ones for opensuse and OBS
+
   '(("AutoProv")
     ("AutoReq")
     ("AutoReqProv")
@@ -393,6 +396,7 @@ value returned by function `user-mail-address'."
     ("Group")
     ("Icon")
     ("%ifarch")
+    ("%if 0%{?suse_version}")
     ("Keyword")
     ("Keywords")
     ("License")
@@ -1129,6 +1133,7 @@ controls whether case is significant."
   (interactive "p")
   (rpm-change))
 
+;; TODO
 ;; The two functions below are not needed actually but use them to create
 ;; osc vc details if necessary
 (defun rpm-insert-packager (&optional arg)
