@@ -1,3 +1,4 @@
+;;; -*- Emacs-Lisp -*-
 ;;; rpm-spec-mode.el --- RPM spec file editing commands for Emacs/XEmacs
 
 ;; Copyright (C) 2012 	   Togan Muftuoglu <toganm@opensuse.org>
@@ -937,6 +938,9 @@ with no args, if that value is non-nil."
 
 ;;------------------------------------------------------------
 
+;; FIXME openSUSE uses packagename.changes file so do I need this
+;; part actually
+
 (defvar rpm-change-log-uses-utc nil
   "*If non-nil, \\[rpm-add-change-log-entry] will use Universal time (UTC).
 If this is nil, it uses local time as returned by `current-time'.
@@ -947,6 +951,8 @@ This variable is global by default, but you can make it buffer-local.")
   "Return the date string for today, inserted by \\[rpm-add-change-log-entry].
 If `rpm-change-log-uses-utc' is nil, \"today\" means the local time zone."
   (format-time-string "%a %b %e %Y" nil rpm-change-log-uses-utc))
+
+
 
 (defun rpm-add-change-log-entry (&optional change-log-entry)
   "Find change log and add an entry for today."
@@ -1233,6 +1239,9 @@ leave point at previous location."
   (insert "%{prefix}"))
 
 ;;------------------------------------------------------------
+
+;; TODO convert to osc or build options
+
 
 (defun rpm-build (buildoptions)
   "Build this RPM package."
@@ -1597,8 +1606,29 @@ if one is present in the file."
      ((eq (string-match "\\(.*\\).spec" file) 0)
       (setq name (match-string 1 file))))
 
+;;; FIXME use package name default
+;;; with current year and user-full-name and user-mail-address
+
+;;; TODO change spec license to rpm-spec-license defun
+;;; TODO package license should meet http://en.opensuse.org/openSUSE:Packaging_guidelines#Licensing
     (if rpm-spec-indent-heading-values
 	(insert
+         "\n#"
+         "\n# spec file for package "
+         "\n#"
+         "\n# Copyright (c) $CURRENT_YEAR $YOUR_NAME_WITH_MAIL_ADDRESS"
+         "\n#"
+         "\n# All modifications and additions to the file contributed by third parties"
+         "\n# remain the property of their copyright owners, unless otherwise agreed"
+         "\n# upon. The license for this file, and modifications and additions to the"
+         "\n# file, is the same license as for the pristine package itself (unless the"
+         "\n# license for the pristine package is not an Open Source License, in which"
+         "\n# case the license is the MIT License). An "Open Source License" is a"
+         "\n# license that conforms to the Open Source Definition (Version 1.9)"
+         "\n# published by the Open Source Initiative."
+         "\n"                                                                
+         "\n# Please submit bugfixes or comments via http://bugs.opensuse.org/\n"
+                                                                                              #
 	 "Summary:        "
 	 "\nName:           " (or name "")
 	 "\nVersion:        " (or version "")
@@ -1613,6 +1643,22 @@ if one is present in the file."
 	 "\nSource0:        %{name}-%{version}.tar.gz"
 	 "\nBuildRoot:      " rpm-spec-default-buildroot)
       (insert
+       "\n#"
+       "\n# spec file for package "
+       "\n#"
+       "\n# Copyright (c) $CURRENT_YEAR $YOUR_NAME_WITH_MAIL_ADDRESS"
+       "\n#"
+       "\n# All modifications and additions to the file contributed by third parties"
+       "\n# remain the property of their copyright owners, unless otherwise agreed"
+       "\n# upon. The license for this file, and modifications and additions to the"
+       "\n# file, is the same license as for the pristine package itself (unless the"
+       "\n# license for the pristine package is not an Open Source License, in which"
+       "\n# case the license is the MIT License). An "Open Source License" is a"
+       "\n# license that conforms to the Open Source Definition (Version 1.9)"
+       "\n# published by the Open Source Initiative."
+       "\n"                                                                
+       "\n# Please submit bugfixes or comments via http://bugs.opensuse.org/\n"
+
        "Summary: "
        "\nName: " (or name "")
        "\nVersion: " (or version "")
