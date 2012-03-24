@@ -1,0 +1,21 @@
+* Rpm-spec mode 
+
+** TODO building 
+    convert to osc or build options
+** TODO rpm-tags-list
+   Also add openSUSE related macros to rpm-tags-list look at
+   build/parsePreamble.c:preambleList[] 
+
+** TODO remove unneeded ones for opensuse and OBS
+** TODO patches
+ when adding patches make sure to follow http://en.opensuse.org/openSUSE:Packaging_Patches_guidelines
+** TODO spec License
+     use package name default for spec file License 
+     with current year and rpm-spec-user-full-name and rpm-spec-mode-user-mail-address
+*** TODO change spec licence to rpm-spec-licence defun
+** TODO package license
+   should meet http://en.opensuse.org/openSUSE:Packaging_guidelines#Licensing
+
+** TODO changelog
+    openSUSE uses packagename.changes file so do I need this
+    part actually
