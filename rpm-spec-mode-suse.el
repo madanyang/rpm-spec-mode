@@ -171,7 +171,7 @@ the package."
 (define-obsolete-variable-alias
   'rpm-insert-version 'rpm-spec-insert-changelog-version)
 
-(defcustom rpm-spec-insert-changelog-version t
+(defcustom rpm-spec-insert-changelog-version nil
   "Automatically add version in a new change log entry."
   :type 'boolean
   :group 'rpm-spec)
@@ -1050,7 +1050,8 @@ controls whether case is significant."
 
 ;; TODO
 ;; Use this basis for osc BUILD environment
-
+;; better check .oscrc or BUILD related env variables
+;; rather than using these as defaults
 (defun rpm-topdir ()
   (or
    (getenv "RPM")
@@ -1616,7 +1617,7 @@ if one is present in the file."
          "\n#"
          "\n# spec file for package "
          "\n#"
-         "\n# Copyright (c) $CURRENT_YEAR $YOUR_NAME_WITH_MAIL_ADDRESS"
+         "\n# Copyright (c)"  (rpm-spec-user-name) (rpm-spec-user-mail-address) 
          "\n#"
          "\n# All modifications and additions to the file contributed by third parties"
          "\n# remain the property of their copyright owners, unless otherwise agreed"
@@ -1691,6 +1692,7 @@ if one is present in the file."
     (rpm-add-change-log-entry "Initial build.")))
 
 ;;------------------------------------------------------------
+;; TODO do I need this really ?
 
 (defun rpm-spec-user-mail-address ()
   "User mail address helper."
