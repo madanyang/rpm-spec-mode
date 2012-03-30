@@ -1629,7 +1629,7 @@ if one is present in the file."
          "\n# published by the Open Source Initiative."
          "\n"                                                                
          "\n# Please submit bugfixes or comments via http://bugs.opensuse.org/\n"
-                                                                                              #
+                                                                                              
 	 "Summary:        "
 	 "\nName:           " (or name "")
 	 "\nVersion:        " (or version "")
