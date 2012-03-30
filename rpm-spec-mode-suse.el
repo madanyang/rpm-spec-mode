@@ -1647,7 +1647,7 @@ if one is present in the file."
        "\n#"
        "\n# spec file for package "
        "\n#"
-       "\n# Copyright (c) $CURRENT_YEAR $YOUR_NAME_WITH_MAIL_ADDRESS"
+       "\n# Copyright (c)"  (rpm-spec-user-name) (rpm-spec-user-mail-address) 
        "\n#"
        "\n# All modifications and additions to the file contributed by third parties"
        "\n# remain the property of their copyright owners, unless otherwise agreed"
@@ -1712,7 +1712,7 @@ if one is present in the file."
   (message
    (concat "rpm-spec-mode version "
            rpm-spec-mode-version
-           "by Togan Muftuoglu <toganm@opensuse.org> based on Stig Bjørlykke, <stigb@tihlde.org> version")))
+           " by Togan Muftuoglu <toganm@opensuse.org> based on Stig Bjørlykke, <stigb@tihlde.org> version")))
 
 ;;;###autoload(add-to-list 'auto-mode-alist '("\\.spec\\(\\.in\\)?$" . rpm-spec-mode))
 

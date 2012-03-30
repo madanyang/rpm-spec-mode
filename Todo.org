@@ -9,7 +9,9 @@
 ** TODO remove unneeded ones for opensuse and OBS
 ** TODO patches
  when adding patches make sure to follow http://en.opensuse.org/openSUSE:Packaging_Patches_guidelines
-** TODO spec License
+** DONE spec License
+   CLOSED: [2012-03-30 Fri 23:57]
+   - State "DONE"       from "TODO"       [2012-03-30 Fri 23:57]
      use package name default for spec file License 
      with current year and rpm-spec-user-full-name and rpm-spec-mode-user-mail-address
 *** TODO change spec licence to rpm-spec-licence defun
