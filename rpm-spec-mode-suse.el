@@ -41,7 +41,7 @@
 ;;; ToDo:
 
 ;; - rewrite function names.
-;; - autofill changelog entries.
+;; - autofill changelog entries with filename.changes file.
 ;; - customize rpm-tags-list, rpm-obsolete-tags-list and rpm-group-tags-list.
 ;; - get values from `rpm --showrc'.
 ;; - ssh/rsh for compile.
@@ -76,7 +76,7 @@
   :group 'languages)
 
 ;; TODO it should be either build or osc build by default
-(defcustom rpm-spec-build-command "rpmbuild"
+(defcustom rpm-spec-build-command "osc build"
   "Command for building an RPM package."
   :type 'string
   :group 'rpm-spec)
@@ -197,7 +197,7 @@ value returned by function `user-mail-address'."
   :type 'boolean
   :group 'rpm-spec)
 
-(defcustom rpm-spec-use-compilation-mode t
+(defcustom rpm-spec-use-compilation-mode nil
   "*If non-nil, build in `compilation-mode' if it's available."
   :type 'boolean
   :group 'rpm-spec)
@@ -219,7 +219,7 @@ value returned by function `user-mail-address'."
   :group 'rpm-spec)
 
 (defcustom rpm-spec-default-build-section
-  "make %{?_smp_mflags}"
+  "%__make %{_smp_mflags}"
   "*Default %build section in new spec files."
   :type 'string
   :group 'rpm-spec)
@@ -360,6 +360,8 @@ value returned by function `user-mail-address'."
 
 (defvar rpm-no-gpg nil "Tell rpm not to sign package.")
 (defvar rpm-spec-nobuild-option "--nobuild" "Option for no build.")
+;; define a similar concept as above for no-service
+(defvar rpm-spec-noservice-option "--no-service" "Option for not running services")
 
 (defvar rpm-tags-list
   ;; From RPM 4.4.9 sources, file build/parsePreamble.c: preambleList[], and
@@ -897,7 +899,8 @@ with no args, if that value is non-nil."
   (if (and (= (buffer-size) 0) rpm-spec-initialize-sections)
       (run-hooks 'rpm-spec-mode-new-file-hook))
 
-  (if (not (executable-find "rpmbuild"))
+;; rather than rpmbuild we want to use osc 
+  (if (not (executable-find "osc"))
       (progn
 	(setq rpm-spec-build-command "rpm")
 	(setq rpm-spec-nobuild-option "--test")))
@@ -950,26 +953,52 @@ This variable is global by default, but you can make it buffer-local.")
 (defsubst rpm-change-log-date-string ()
   "Return the date string for today, inserted by \\[rpm-add-change-log-entry].
 If `rpm-change-log-uses-utc' is nil, \"today\" means the local time zone."
-  (format-time-string "%a %b %e %Y" nil rpm-change-log-uses-utc))
+  (format-time-string "%a %b %e %H:%M:%S %Z %Y" nil rpm-change-log-uses-utc))
+
+(defun _rpm-getwd ()
+  "Returns the current working directory, sans parent directories"
+  (file-name-nondirectory (directory-file-name (expand-file-name default-directory))))
 
 
 
-(defun rpm-add-change-log-entry (&optional change-log-entry)
-  "Find change log and add an entry for today."
-  (interactive "sChange log entry: ")
-  (save-excursion
-    (rpm-goto-section "changelog")
-    (let* ((address (rpm-spec-user-mail-address))
-           (fullname (or rpm-spec-user-full-name (user-full-name)))
-           (system-time-locale "C")
-           (string (concat "* " (rpm-change-log-date-string) " "
-                           fullname " <" address ">"
-                           (and rpm-spec-insert-changelog-version
-                                (concat " - " (rpm-find-spec-version t))))))
-      (if (not (search-forward string nil t))
-          (insert "\n" string "\n")
-        (forward-line 2))
-      (insert "- " change-log-entry "\n"))))
+(defun rpm-add-change-log-entry ()
+  "Edit the .changes file in the current working directory,
+inserting the correct boilerplate text and positioning the cursor
+for immediate typing. This is similar to the 'osc vc' command in the
+internal SUSE buildsystem. "
+  (interactive)
+  (let* ((filename (format "%s.changes" (_rpm-getwd)))
+         (time-format "%a %b %e %H:%M:%S %Z %Y")
+         (buf (find-file filename)))
+  ;; (let* ((address (rpm-spec-user-mail-address))
+  ;;          (fullname (or rpm-spec-user-full-name (user-full-name)))
+    (switch-to-buffer buf)
+    (goto-char (point-min))
+    (insert (format "-------------------------------------------------------------------\n"))
+    (insert (format "%s - %s\n" (format-time-string time-format) rpm-spec-user-full-name "<" rpm-spec-user-mail-address ">"))
+    (insert (format "\n"))
+    (insert (format "%s " "-"))
+    (let ((old-pnt (point-marker)))
+      (insert (format "\n\n"))
+      (goto-char old-pnt))))
+
+
+;; (defun rpm-add-change-log-entry (&optional change-log-entry)
+;;   "Find change log and add an entry for today."
+;;   (interactive "sChange log entry: ")
+;;   (save-excursion
+;;     (rpm-goto-section "changelog")
+;;     (let* ((address (rpm-spec-user-mail-address))
+;;            (fullname (or rpm-spec-user-full-name (user-full-name)))
+;;            (system-time-locale "C")
+;;            (string (concat "* " (rpm-change-log-date-string) " "
+;;                            fullname " <" address ">"
+;;                            (and rpm-spec-insert-changelog-version
+;;                                 (concat " - " (rpm-find-spec-version t))))))
+;;       (if (not (search-forward string nil t))
+;;           (insert "\n" string "\n")
+;;         (forward-line 2))
+;;       (insert "- " change-log-entry "\n"))))
 
 ;;------------------------------------------------------------
 
