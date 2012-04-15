@@ -192,7 +192,7 @@ value returned by function `user-mail-address'."
                  string)
   :group 'rpm-spec)
 
-(defcustom rpm-spec-indent-heading-values nil
+(defcustom rpm-spec-indent-heading-values t
   "*Indent values for all tags in the \"heading\" of the spec file."
   :type 'boolean
   :group 'rpm-spec)
@@ -1639,6 +1639,8 @@ if one is present in the file."
 ;;; FIXME use package name default
 ;;; with current year and user-full-name and user-mail-address
 
+;;; FIXME user-full-name is not working
+
 ;;; TODO change spec license to rpm-spec-license defun
 ;;; TODO package license should meet http://en.opensuse.org/openSUSE:Packaging_guidelines#Licensing
     (if rpm-spec-indent-heading-values
@@ -1646,7 +1648,7 @@ if one is present in the file."
          "\n#"
          "\n# spec file for package "
          "\n#"
-         "\n# Copyright (c)"  (rpm-spec-user-name) (rpm-spec-user-mail-address) 
+         "\n# Copyright (c)"  (user-full-name) (rpm-spec-user-mail-address) 
          "\n#"
          "\n# All modifications and additions to the file contributed by third parties"
          "\n# remain the property of their copyright owners, unless otherwise agreed"
@@ -1676,7 +1678,7 @@ if one is present in the file."
        "\n#"
        "\n# spec file for package "
        "\n#"
-       "\n# Copyright (c)"  (rpm-spec-user-name) (rpm-spec-user-mail-address) 
+       "\n# Copyright (c)"  (user-full-name) (rpm-spec-user-mail-address) 
        "\n#"
        "\n# All modifications and additions to the file contributed by third parties"
        "\n# remain the property of their copyright owners, unless otherwise agreed"
