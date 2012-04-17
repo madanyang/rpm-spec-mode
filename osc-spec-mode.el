@@ -1,4 +1,25 @@
+;;; 
+;;; osc-spec-mode.el --- RPM spec file editing commands for Emacs
+;;;  Copyright (C) 2012 	   Togan Muftuoglu <toganm@opensuse.org>
+
+;;; Commentary:
+
+;; This mode is used for editing spec files used for building RPM packages.
+;; Put this in your .emacs file to enable autoloading of rpm-spec-mode,
+;; and auto-recognition of ".spec" files:
+;;
+;;  (autoload 'osc-spec-mode "osc-spec-mode.el" "RPM spec mode." t)
+;;  (setq auto-mode-alist (append '(("\\.spec" . osc-spec-mode))
+;;                                auto-mode-alist))
+;;------------------------------------------------------------
+;;
+
+;;; Code:
+
 (require 'cl)
+
+(defconst osc-spec-mode-version "0.0.1" "Version of `osc-spec-mode'.")
+
 (defun osc-br-split ()
   "Split a BuildRequires: line like this \"BuildRequires:  foo bar baz\" into
 BuildRequires:  foo
@@ -102,3 +123,15 @@ other."
     (split-window)
     (find-file rej-buffer)
     (revert-buffer t t)))
+
+(defun osc-about-osc-spec-mode (&optional arg)
+  "About `osc-spec-mode'."
+  (interactive "p")
+  (message
+   (concat "osc-spec-mode version "
+           osc-spec-mode-version
+           " by Togan Muftuoglu <toganm@opensuse.org> version")))
+
+;;;###autoload(add-to-list 'auto-mode-alist '("\\.spec\\(\\.in\\)?$" . osc-spec-mode))
+
+(provide 'osc-spec-mode)
