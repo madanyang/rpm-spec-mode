@@ -1,4 +1,4 @@
-* Rpm-spec mode
+* osc-spec mode
 ** Initialize the spec
 When initializing the spec make sure to follow [[http://en.opensuse.org/openSUSE:Specfile_guidelines#Metadata_Tags][Metadata Tags]]
 
