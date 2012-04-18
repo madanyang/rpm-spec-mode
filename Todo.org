@@ -1,35 +1,61 @@
-* Rpm-spec mode 
+* Rpm-spec mode
+** Initialize the spec
+When initializing the spec make sure to follow [[http://en.opensuse.org/openSUSE:Specfile_guidelines#Metadata_Tags][Metadata Tags]]
 
-** STARTED building
-   :LOGBOOK:
-   CLOCK: [2012-04-18 Wed 00:36]--[2012-04-18 Wed 00:40] =>  0:04
-   :END:
-    convert to osc or build options
-** TODO rpm-tags-list
-   Also add openSUSE related macros to rpm-tags-list look at
-   build/parsePreamble.c:preambleList[] 
+ 
+*** TODO Initialize the spec file if it does not exist
+    [ ] Using skeleton, tempo or auto-insert create a default spec file see the
+    [[file:osc-spec-mode.el::%3B%3B%20TODO%20use%20auto-insert%20mode%20to%20initiliaze%20the%20spec][todo in the osc-spec-mode]] reading the auto-insert from emacs manual should
+    help best options and the way to go.
 
-** TODO remove unneeded ones for opensuse and OBS
-** TODO patches
- when adding patches make sure to follow http://en.opensuse.org/openSUSE:Packaging_Patches_guidelines
-** BUG spec License
-   - State "BUG"        from "DONE"       [2012-04-18 Wed 00:34]
-   - State "DONE"       from "TODO"       [2012-03-30 Fri 23:57]
-     use package name default for spec file License 
-     with current year and rpm-spec-user-full-name and rpm-spec-mode-user-mail-address
-*** TODO change spec licence to rpm-spec-licence defun
-** TODO package license
-   should meet http://en.opensuse.org/openSUSE:Packaging_guidelines#Licensing
+    [ ] if possible create spec template for major packages as outlined in 
+   [[ http://en.opensuse.org/openSUSE:Specfile_guidelines][openSUSE Specfile Guidelines]]
+*** TODO spec License
+    [ ] create a license for the spec file itself as below using package name default for spec file 
+      with current year and either get osc user full name and email or make it as an option
+      to configure. By default it should be set to user name and email address as
+      emacs sees it.
 
-** STARTED changelog
-   :LOGBOOK:
-   CLOCK: [2012-04-18 Wed 00:41]--[2012-04-18 Wed 01:26] =>  0:45
-   :END:
-    openSUSE uses packagename.changes file so do I need this
-    part actually. The answer is no. However, I need to make sure osc vc or a
-    similar action is done and 
-** TODO Fixing spec file
-[ ] If there are multiple BuildRequires then fix them so there is one per line. 
-[ ] if the spec file already has the changelog
-    entries then need to correct the part so there is a PACKAGENAME.changes
-    file.
+       #+begin_example
+       # spec file for package python-$FOO
+       #
+       # Copyright (c) $CURRENT_YEAR $YOUR_NAME_WITH_MAIL_ADDRESS
+       #
+       # All modifications and additions to the file contributed by third parties
+       # remain the property of their copyright owners, unless otherwise agreed
+       # upon. The license for this file, and modifications and additions to the
+       # file, is the same license as for the pristine package itself (unless the
+       # license for the pristine package is not an Open Source License, in which
+       # case the license is the MIT License). An "Open Source License" is a
+       # license that conforms to the Open Source Definition (Version 1.9)
+       # published by the Open Source Initiative.
+  
+       # Please submit bugfixes or comments via http://bugs.opensuse.org/
+       #+end_example
+** TODO Editing and fixing the spec file
+Even though the spec template should provide the basics of setup build install
+and files parts, it may be needed (as is the case usually) to modify various
+parts of the spec file. There should be functions that would allow to do so as
+we might be editing a spec file anyway.
+
+*** TODO package license
+    [ ] should meet [[http://en.opensuse.org/openSUSE:Packaging_guidelines#Licensing][openSUSE Packaging license]]
+
+*** TODO Build Requires
+    [ ] If there are multiple BuildRequires then fix them so there is one per
+    line.
+*** TODO patches
+    [ ] when adding patches make sure to follow [[http://en.opensuse.org/openSUSE:Packaging_Patches_guidelines][openSUSE Patching Guidelines]]
+    [ ] find the patches in the current directory and add them to the spec file
+    with the correct patch number
+    [ ] find rejects when the patch is applied and view  them side by side
+
+*** TODO rpm tags and groups list
+    [ ] Use rpm groups  Also add openSUSE related macros to rpm-tags-list look at
+    build/parsePreamble.c:preambleList[] 
+*** TODO Create or move changelog
+    [ ] openSUSE uses packagename.changes file so do I need this part
+     actually. The answer is no. However, I need to make sure osc vc or a similar
+     action is done and if possible create such a thing.
+    [ ] if the spec file already has the changelog entries then need to
+    correct the part so there is a PACKAGENAME.changes file.
