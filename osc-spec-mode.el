@@ -20,6 +20,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
 ;;  This mode is used for editing spec files used for writing spec files for
 ;;  openSUSE rpm packages. It tries to follow the packaging guidelines of the
 ;;  project and does not replace osc commands.
@@ -37,8 +38,18 @@
 ;;; Code:
 
 (require 'cl)
-
+(require 'dired)
 (defconst osc-spec-mode-version "0.0.1" "Version of `osc-spec-mode'.")
+
+(defgroup osc-spec nil
+  "RPM spec mode with Emacs/XEmacs enhancements."
+  :prefix "osc-spec-"
+  :group 'languages)
+
+(defcustom osc-owner ""
+  "This variable holds your email address, to be used in changelogs."
+  :type 'string
+  :group 'osc-spec)
 
 
 
@@ -187,6 +198,73 @@
     (osc-view-readonly filename)))
 
 
+(defun osc-edit-spec ()
+  "Edit the .spec file found in the current working directory."
+  (interactive)
+  (let* ((filename (format "%s.spec" (osc-pwd)))
+         (buf (find-file filename)))
+    (switch-to-buffer buf))
+
+
+(defun osc-remove-leading-plusses ()
+  "Strip leading `+' characters from the working buffer.  This is
+useful when copying and pasting diff output directly."
+  (interactive)
+  (let ((old-pnt (point-marker)))
+    (beginning-of-buffer)
+    (replace-regexp "^+" "")
+    (goto-char old-pnt)
+    (message "I am feeling nonplussed.")))
+
+(defun osc-intltoolize-spec ()
+  "Add intltoolize --force to the spec"
+  (interactive)
+  (let ((old-pnt (point-marker)))
+    (beginning-of-buffer)
+    (replace-regexp "^autoreconf.*$" "\\& intltoolize --force")
+
+    (message "Now inspect what you've done, since it might not be
+    correct.  If you're happy with the change(s) made, save this
+    buffer, run osc-intltoolize-changelog, and save that buffer
+    too.")))
+
+(defun osc-intltoolize-changelog ()
+  "Document what I did after intltoolizing a spec."
+  (interactive)
+  (osc-changelog)
+  (insert (format "Fix the build when against newer versions of intltool.")))
+
+;;; Similar to vc on suse boxen.
+;;; FIXME: Make this smarter in the face of a) oddly named working directories,
+;;; b) "packages" with multiple .spec and .changes files, c) everything
+;;; else.
+
+(defun osc-changelog ()
+
+  "Edit the .changes file in the current working directory,
+inserting the correct boilerplate text and positioning the cursor
+for immediate typing.  This is similar to the 'vc' command in the
+internal SUSE buildsystem. "
+
+  (interactive)
+  (if (string-equal "" osc-owner)
+      (message "You need to customize the variable osc-owner before using this functionality.  To do so: M-x customize-group RET ab RET, then set `osc-owner' to your email address and save.")
+    (let* ((filename (format "%s.changes" (osc-pwd)))
+           (time-format "%a %b %e %H:%M:%S %Z %Y")
+           (buf (find-file filename)))
+      (switch-to-buffer buf)
+      (goto-char (point-min))
+      (insert (format "-------------------------------------------------------------------\n"))
+      (insert (format "%s - %s\n" (format-time-string time-format) osc-owner))
+      (insert (format "\n"))
+      (insert (format "%s " "-"))
+      (let ((old-pnt (point-marker)))
+        (insert (format "\n\n"))
+        (goto-char old-pnt)))))
+
+
+
+
 (defun osc-br-split ()
   "Split a BuildRequires: line like this \"BuildRequires:  foo bar baz\" into
 BuildRequires:  foo
@@ -251,7 +329,7 @@ other."
   (message
    (concat "osc-spec-mode version "
            osc-spec-mode-version
-           " by Togan Muftuoglu <toganm@opensuse.org> version")))
+           " by Togan Muftuoglu <toganm@opensuse.org> ")))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.spec\\(\\.in\\)?$" . osc-spec-mode))
