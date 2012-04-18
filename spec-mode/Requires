@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Requires
+# key: Re
+# binding: direct-keybinding
+# --
+Requires:  ${1:PKG}

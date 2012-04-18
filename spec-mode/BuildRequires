@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: BuildRequires
+# key: BR
+# binding: direct-keybinding
+# --
+BuildRequires:  ${1:PKG}

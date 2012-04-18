@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: source
+# key: So
+# binding: direct-keybinding
+# --
+Source${1:N}:        ${2:NAME}

@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: ifsusever
+# key: suse
+# binding: direct-keybinding
+# --
+%if 0%{?suse_version} >= ${1:1210}
+${2:# STUFF}
+%else
+${3:# STUFF}
+%endif
+${4}

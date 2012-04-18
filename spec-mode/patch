@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: patch
+# key: Pa
+# binding: direct-keybinding
+# --
+Patch${1:N}:         ${2:NAME}	

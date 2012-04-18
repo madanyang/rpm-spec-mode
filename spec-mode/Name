@@ -1,0 +1,44 @@
+# -*- mode: snippet -*-
+# name: Name
+# key: Na
+# binding: direct-keybinding
+# --
+Name:           
+Version:        ${1:VERSION}
+Release:        0
+Summary:        ${2:SUMMARY}
+Group:          ${3:GROUP}
+License:        ${4:LICENSE}
+Url:            ${5:URL}
+PreReq:         ${6:PKG}
+Provides:       ${7:SYMBOL}
+BuildRequires:  ${8:PKG}
+Source:         ${9:FILE}
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+
+	
+%description
+${10:LONG DESCRIPTION}
+
+	
+%prep
+%setup
+	
+%build
+%configure
+make %{?jobs:-j%jobs}
+	
+%install
+%makeinstall
+	
+	
+%post
+%postun
+	
+%files
+%defattr(-,root,root)
+%doc ChangeLog README COPYING AUTHORS
+	
+%changelog
+
+

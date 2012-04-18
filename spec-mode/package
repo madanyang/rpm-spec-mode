@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: package
+# key: p
+# binding: direct-keybinding
+# --
+%package        ${1:PKGNAME}
+License:        ${2:LICENSE}
+Summary:        ${3:SUMMARY}
+Group:          ${4:GROUP}
+
+
+%description    $1
+${5:LONG DESCRIPTION}
+
+
