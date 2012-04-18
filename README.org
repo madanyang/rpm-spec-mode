@@ -1,0 +1,18 @@
+* Readme 
+
+These are experimental codes all for personal use. Feel free to fork it and
+enhance them
+
+** osc-spec-mode
+
+
+   This is an experimental mode used for editing spec files used for writing spec
+   files for openSUSE rpm packages. It tries to follow the packaging guidelines
+   of the project and does not replace osc commands.
+
+   It also depends on quilt and osc
+
+** spec snippets
+
+These were originally were for vim
+  
