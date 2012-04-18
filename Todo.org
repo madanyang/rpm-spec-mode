@@ -59,3 +59,5 @@ we might be editing a spec file anyway.
      action is done and if possible create such a thing.
     [ ] if the spec file already has the changelog entries then need to
     correct the part so there is a PACKAGENAME.changes file.
+
+* snippets
