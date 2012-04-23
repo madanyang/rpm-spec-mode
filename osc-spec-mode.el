@@ -36,6 +36,7 @@
 ;;  (add-hook 'find-file-hook 'auto-insert)'
 
 ;;; Code:
+(require 'derived)
 
 (define-derived-mode osc-spec-mode sh-mode "osc-spec mode"
 "Major mode for rpm spec files.
@@ -882,8 +883,8 @@
 ;;            " by Togan Muftuoglu <toganm@opensuse.org> ")))
 
 ;; ;;;###autoload
-;; (add-to-list 'auto-mode-alist '("\\.spec\\(\\.in\\)?$" . osc-spec-mode))
+ (add-to-list 'auto-mode-alist '("\\.spec\\(\\.in\\)?$" . osc-spec-mode))
 
-;; (provide 'osc-spec-mode)
+ (provide 'osc-spec-mode)
 
 ;; ;;; osc-spec-mode.el ends here
