@@ -3,7 +3,7 @@
 These are experimental codes all for personal use. Feel free to fork it and
 enhance them
 
-** osc-spec-mode
+** rpm-mode
 
 
    This is an experimental mode used for editing spec files used for writing spec

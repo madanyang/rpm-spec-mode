@@ -1,8 +1,6 @@
-* osc-spec mode
+* rpm-mode
 ** Initialize the spec
 When initializing the spec make sure to follow [[http://en.opensuse.org/openSUSE:Specfile_guidelines#Metadata_Tags][Metadata Tags]]
-
- 
 *** TODO Initialize the spec file if it does not exist
     [ ] Using skeleton, tempo or auto-insert create a default spec file see the
     [[file:osc-spec-mode.el::%3B%3B%20TODO%20use%20auto-insert%20mode%20to%20initiliaze%20the%20spec][todo in the osc-spec-mode]] reading the auto-insert from emacs manual should
@@ -41,8 +39,8 @@ we might be editing a spec file anyway.
 *** TODO package license
     [ ] should meet [[http://en.opensuse.org/openSUSE:Packaging_guidelines#Licensing][openSUSE Packaging license]]
 
-*** TODO Build Requires
-    [ ] If there are multiple BuildRequires then fix them so there is one per
+*** DONE Build Requires
+    [X] If there are multiple BuildRequires then fix them so there is one per
     line.
 *** TODO patches
     [ ] when adding patches make sure to follow [[http://en.opensuse.org/openSUSE:Packaging_Patches_guidelines][openSUSE Patching Guidelines]]
