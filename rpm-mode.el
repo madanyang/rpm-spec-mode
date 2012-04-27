@@ -375,6 +375,27 @@
   "Regular expression for matching valid tags.")
 
 
+(defvar rpm-mode-syntax-table nil
+  "Syntax table in use in `rpm-mode' buffers.")
+(unless rpm-mode-syntax-table
+  (setq rpm-mode-syntax-table (make-syntax-table))
+  (modify-syntax-entry ?\\ "\\" rpm-mode-syntax-table)
+  (modify-syntax-entry ?\n ">   " rpm-mode-syntax-table)
+  (modify-syntax-entry ?\f ">   " rpm-mode-syntax-table)
+  (modify-syntax-entry ?\# "<   " rpm-mode-syntax-table)
+  (modify-syntax-entry ?/ "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?* "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?+ "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?- "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?= "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?% "_" rpm-mode-syntax-table)
+  (modify-syntax-entry ?< "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?> "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?& "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?| "." rpm-mode-syntax-table)
+  (modify-syntax-entry ?\' "." rpm-mode-syntax-table))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; functions for rpm mode  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -432,7 +453,7 @@ BuildRequires:  baz"
 
 
 ;;;###autoload
-;; (add-to-list 'auto-mode-alist '("\\.spec\\'" . rpm-mode))
+(add-to-list 'auto-mode-alist '("\\.spec\\'" . rpm-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO                                                           ;;
@@ -440,9 +461,13 @@ BuildRequires:  baz"
 ;; need to define syntax table and follow the sample mode example ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(require 'derived)
 
-(define-derived-mode rpm-mode fundamental-mode "RPM"
-   "Major mode for editing RPM spec files."
+(define-derived-mode rpm-mode c-mode "RPM"
+   "Major mode for editing RPM spec files.
+Special commands:
+\\{rpm-mode-map}"
+
    (make-local-variable 'paragraph-start)
    (setq paragraph-start (concat "$\\|" page-delimiter))
    (make-local-variable 'paragraph-separate)
