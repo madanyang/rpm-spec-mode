@@ -53,6 +53,7 @@
     (define-key map "\C-c\C-fd" 'rpm-fdupes)
     (define-key map "\C-c\C-br" 'rpm-br-split)
     (define-key map "\C-c\C-ld" 'rpm-ldconfig)
+    (define-key map "\C-c\C-ts" 'rpm-tidy-spec)
     map)
   "Keymap for `rpm-mode'.")
 
@@ -63,6 +64,27 @@
 (defvar rpm-sections
    '("preamble" "description" "patch" "package" "prep" "configure" "setup" "build" "install" "check" "clean" "changelog" "files")
    "Partial list of section names.")
+
+(defvar rpm-section-list
+  '(("preamble") ("description") ("prep") ("setup") ("build") ("install")
+    ("check") ("clean") ("changelog") ("files"))
+  "Partial list of section names.")
+
+
+(defconst rpm-section-seperate "^%\\(\\w+\\)\\s-")
+(defconst rpm-section-regexp
+  (eval-when-compile
+    (concat "^%"
+            (regexp-opt
+             ;; From RPM 4.6.0 sources, file build/parseSpec.c: partList[].
+             '("build" "changelog" "check" "clean" "description" "files"
+               "install" "package" "post" "postun" "pretrans" "posttrans"
+               "pre" "prep" "preun" "trigger" "triggerin" "triggerpostun"
+               "triggerprein" "triggerun" "verifyscript") t)
+            "\\b"))
+  "Regular expression to match beginning of a section.")
+
+
 
 (defvar rpm-tags-list
   ;; From RPM 4.4.9 sources, file build/parsePreamble.c: preambleList[], and
@@ -451,9 +473,379 @@ BuildRequires:  baz"
       (message "You can only run rpm-br-split on a line that starts with BuildRequires:"))))
 
 
+;; (defun run-spec-beautifier ()
+;;   "Run an inferior spec-beautifier process, with I/O via buffer *spec-beautifier*."
+;;   (interactive)
+;;   (require 'comint)
+;;   (switch-to-buffer (make-comint "spec-beautifier" "spec-beautifier" "-r" ))
+;;   (inferior-spec-beautifier-mode))
 
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.spec\\'" . rpm-mode))
+
+(defun rpm-tidy-spec ()
+  "Tidies the spec content in the buffer using `spec-beautifier'"
+  (interactive)
+  (shell-command-on-region
+   ;; beginning and end of buffer
+   (point-min)
+   (point-max)
+   ;; command and parameters
+   "spec-beautifier -r"
+   ;; output buffer
+   (current-buffer)
+   ;; replace?
+   t
+   ;; name of the error buffer
+   "*Spec-beautifier Error Buffer*"
+   ;; show error buffer?
+   t))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; borrowed from                                                       ;;
+;; http://wiki.mandriva.com/en/Development/Tasks/Packaging/Tools/Emacs ;;
+;;                                                                     ;;
+;; modified to fit needs                                               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'ffap)
+(defun rpm-ffap (name)
+  (ffap-locate-file name '("" ".gz" ".bz2") (rpm_getwd))) 
+ ;              '("./" "../SOURCES")))              
+(add-to-list 'ffap-alist 
+          '(rpm-mode . rpm-ffap))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; borrowed from                                                       ;;
+;; http://wiki.mandriva.com/en/Development/Tasks/Packaging/Tools/Emacs ;;
+;;                                                                     ;;
+;; modified to fit needs                                               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defun rpm-insert-patch ()
+  (interactive)
+  (goto-char (point-min))
+  (let* ((file 
+     (completing-read 
+      "Patch: "
+      (mapcar (function (lambda (rule) (list rule)))
+            (directory-files (rpm_getwd) nil "^\\([_-0-9a-zA-Z]+\\).''\\.patch.'''"))) )
+       (max (search-forward-regexp rpm-section-regexp))
+       (count 0)
+       )
+   (goto-char (point-min))
+   (while (search-forward-regexp "^Patch?\\([0-9]+\\)?" max t) 
+     (if (> (string-to-number (match-string 1)) count)
+        (setq count (string-to-number (match-string 1)))
+      )
+     )
+   (if (eq count 0) (while (search-forward-regexp "^Source?\\([0-9]+\\)?" max t)()))   
+   (setq count (1+ count))
+   (end-of-line)
+   (insert (format "\n%s%d%s%s" "Patch" count ": " file))
+   (goto-char (point-min))
+   (if (search-forward-regexp "^%patch?\\([0-9]+\\)?" nil t)
+      (progn
+        (beginning-of-line)
+        (while (search-forward-regexp "^%patch?\\([0-9]+\\)?" nil t) ())
+        )
+     (search-forward-regexp "^%setup" nil t))
+
+   (end-of-line)
+   (insert (format "\n%s%d%s" "%patch" count " -p1 "))
+   (let ((name (rpm-field-value "name" nil))
+        (version (rpm-field-value "version" nil))
+        (string)
+        )
+     (cond ((string-match 
+           (concat "^" (regexp-quote (format "%s-%s-" name version))
+                 "\\([^.]*\\)\\(\\.patch\\.bz2\\)") file)
+          (setq string (format "%s%s" "-b ." 
+                          (substring file (match-beginning 1) (match-end 1)))))
+         ((string-match 
+           (concat "^" (regexp-quote (format "%s-" name version))
+                 ".''[0-9]+-" "\\([^.]'''\\)\\(\\.patch\\.bz2\\)") file)
+          (setq string 
+               (format "%s%s" "-b ." 
+                     (substring file (match-beginning 1) (match-end 1)))))
+         )
+     (if string
+        (insert string))
+     )))
+
+
+;;;;;;;;;;;;;;;;;;;
+;; rpm-spec-mode ;;
+;;;;;;;;;;;;;;;;;;;
+
+(defun rpm-field-value (field max)
+  "Get the value of FIELD, searching up to buffer position MAX.
+See `search-forward-regexp'."
+  (save-excursion
+    (condition-case nil
+        (let ((str
+               (progn
+                 (goto-char (point-min))
+                 (search-forward-regexp
+                  (concat "^" field ":[ \t]*\\(.*?\\)[ \t]*$") max)
+                 (match-string 1))))
+          ;; Try to expand macros
+          (if (string-match "\\(%{?\\(\\?\\)?\\)\\([a-zA-Z0-9_]*\\)\\(}?\\)" str)
+              (let ((start-string (substring str 0 (match-beginning 1)))
+                    (end-string (substring str (match-end 4))))
+                (if (progn
+                      (goto-char (point-min))
+                      (search-forward-regexp
+                       (concat "%\\(define\\|global\\)[ \t]+"
+                               (match-string 3 str)
+                               "[ \t]+\\(.*\\)") nil t))
+                    ;; Got it - replace.
+                    (concat start-string (match-string 2) end-string)
+                  (if (match-string 2 str)
+                      ;; Conditionally evaluated macro - remove it.
+                      (concat start-string end-string)
+                    ;; Leave as is.
+                    str)))
+            str))
+      (error nil))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; elisp_autobild.el ;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defun rpm-changelog-to-suse-changelog ()
+  "Convert rpm-style changelog text to SUSE .changes text. This
+is useful when populating a new .changes file with previously
+existing changelog entries."
+  (interactive)
+  (let ((old-pnt (point-marker)))
+    (progn
+      ;; Slap an extra newline after email addresses
+      (beginning-of-buffer)
+      (replace-regexp "^\*.* - .*@.*\.*$" "\\& \n")
+      
+      ;; Replace "* " with a bunch of dashes
+      (beginning-of-buffer)
+      (replace-regexp "^\* " "\n-------------------------------------------------------------------\n")
+      
+      (goto-char old-pnt))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; from rpm-spec-mode ;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;------------------------------------------------------------
+(defun rpm-completing-read (prompt table &optional pred require init hist)
+  "Read from the minibuffer, with completion.
+Like `completing-read', but the variable `rpm-completion-ignore-case'
+controls whether case is significant."
+  (let ((completion-ignore-case rpm-completion-ignore-case))
+    (completing-read prompt table pred require init hist)))
+
+(defun rpm-insert (&optional what file-completion)
+  "Insert given tag.  Use file-completion if argument is t."
+  (beginning-of-line)
+  (if (not what)
+      (setq what (rpm-completing-read "Tag: " rpm-tags-list)))
+  (if (string-match "^%" what)
+      (setq read-text (concat "Packagename for " what ": ")
+            insert-text (concat what " "))
+    (setq read-text (concat what ": ")
+          insert-text (concat what ": ")))
+  (cond
+   ((string-equal what "Group")
+    (rpm-insert-group))
+   ((string-equal what "Source")
+    (rpm-insert-n "Source"))
+   ((string-equal what "Patch")
+    (rpm-insert-n "Patch"))
+   (t
+    (if file-completion
+        (insert insert-text (read-file-name (concat read-text) "" "" nil) "\n")
+      (insert insert-text (read-from-minibuffer (concat read-text)) "\n")))))
+
+(defun rpm-insert-n (what &optional arg)
+  "Insert given tag with possible number."
+  ;; note that string-int is obsolete as of 22.1 so change to string-to number
+  (save-excursion
+    (goto-char (point-max))
+    (if (search-backward-regexp (concat "^" what "\\([0-9]*\\):") nil t)
+        (let ((release (1+ (string-to-number (match-string 1)))))
+          (forward-line 1)
+          (let ((default-directory (rpm_getwd))) ;; (concat (rpm-topdir) "/SOURCES/")))
+            (insert what (int-to-string release) ": "
+                    (read-file-name (concat what "file: ") "" "" nil) "\n")))
+      (goto-char (point-min))
+      (rpm-end-of-section)
+      (insert what ": " (read-from-minibuffer (concat what "file: ")) "\n"))))
+
+(defun rpm-change (&optional what arg)
+  "Update given tag."
+  (save-excursion
+    (if (not what)
+        (setq what (rpm-completing-read "Tag: " rpm-tags-list)))
+    (cond
+     ((string-equal what "Group")
+      (rpm-change-group))
+     ((string-equal what "Source")
+      (rpm-change-n "Source"))
+     ((string-equal what "Patch")
+      (rpm-change-n "Patch"))
+     (t
+      (goto-char (point-min))
+      (if (search-forward-regexp (concat "^" what ":\\s-*\\(.*\\)$") nil t)
+          (replace-match
+           (concat what ": " (read-from-minibuffer
+                              (concat "New " what ": ") (match-string 1))))
+        (message "%s tag not found..." what))))))
+
+(defun rpm-change-n (what &optional arg)
+  "Change given tag with possible number."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((number (read-from-minibuffer (concat what " number: "))))
+      (if (search-forward-regexp
+           (concat "^" what number ":\\s-*\\(.*\\)") nil t)
+          (let ((default-directory (rpm_getwd))) ;; (concat (rpm-topdir) "/SOURCES/")))
+            (replace-match
+             (concat what number ": "
+                     (read-file-name (concat "New " what number " file: ")
+                                     "" "" nil (match-string 1)))))
+        (message "%s number \"%s\" not found..." what number)))))
+
+(defun rpm-insert-group (group)
+  "Insert Group tag."
+  (interactive (list (rpm-completing-read "Group: " rpm-group-tags-list)))
+  (beginning-of-line)
+  (insert "Group: " group "\n"))
+
+(defun rpm-change-group (&optional arg)
+  "Update Group tag."
+  (interactive "p")
+  (save-excursion
+    (goto-char (point-min))
+    (if (search-forward-regexp "^Group: \\(.*\\)$" nil t)
+        (replace-match
+         (concat "Group: "
+                 (insert (rpm-completing-read "Group: " rpm-group-tags-list
+                                              nil nil (match-string 1)))))
+      (message "Group tag not found..."))))
+
+(defun rpm-insert-tag (&optional arg)
+  "Insert or change a tag."
+  (interactive "p")
+  (if current-prefix-arg
+      (rpm-change)
+    (rpm-insert)))
+
+(defun rpm-change-tag (&optional arg)
+  "Change a tag."
+  (interactive "p")
+  (rpm-change))
+
+
+
+
+
+
+(defun rpm_getwd ()
+  "Returns the current working directory, sans parent directories"
+  (file-name-nondirectory (directory-file-name (expand-file-name default-directory))))
+
+
+(defun rpm-view-readonly (filename)
+  "view a file readonly"
+  (let* ((buffer-name (format "*%s*" filename)))
+    (if (get-buffer buffer-name)
+        (kill-buffer buffer-name))
+    (let* ((output-buffer (get-buffer-create buffer-name))
+           (outwin (display-buffer output-buffer nil t)))
+      (save-selected-window
+        (select-window outwin)
+        (insert-file-contents filename)
+        (setq buffer-read-only t)
+        (goto-char (point-min))))))
+
+
+
+
+(defun rpm-view-changelog ()
+  "something like \"less foo.changes\""  
+  (interactive)
+
+  (let ((filename (format "%s.changes" (rpm_getwd))))
+    (rpm-view-readonly filename)))
+
+
+(defun rpm-current-section nil
+  (interactive)
+  (save-excursion
+    (rpm-forward-section)
+    (rpm-backward-section)
+    (if (bobp) "preamble"
+      (buffer-substring (match-beginning 1) (match-end 1)))))
+
+(defun rpm-backward-section nil
+  "Move backward to the beginning of the previous section.
+Go to beginning of previous section."
+  (interactive)
+  (or (re-search-backward rpm-section-regexp nil t)
+      (goto-char (point-min))))
+
+(defun rpm-beginning-of-section nil
+  "Move backward to the beginning of the current section.
+Go to beginning of current section."
+  (interactive)
+  (or (and (looking-at rpm-section-regexp) (point))
+      (re-search-backward rpm-section-regexp nil t)
+      (goto-char (point-min))))
+
+(defun rpm-forward-section nil
+  "Move forward to the beginning of the next section."
+  (interactive)
+  (forward-char)
+  (if (re-search-forward rpm-section-regexp nil t)
+      (progn (forward-line 0) (point))
+    (goto-char (point-max))))
+
+(defun rpm-end-of-section nil
+  "Move forward to the end of this section."
+  (interactive)
+  (forward-char)
+  (if (re-search-forward rpm-section-regexp nil t)
+      (forward-line -1)
+    (goto-char (point-max)))
+  ;;  (while (or (looking-at paragraph-separate) (looking-at "^\\s-*#"))
+  (while (looking-at "^\\s-*\\($\\|#\\)")
+    (forward-line -1))
+  (forward-line 1)
+  (point))
+
+(defun rpm-goto-section (section)
+  "Move point to the beginning of the specified section;
+leave point at previous location."
+  (interactive (list (rpm-completing-read "Section: " rpm-section-list)))
+  (push-mark)
+  (goto-char (point-min))
+  (or
+   (equal section "preamble")
+   (re-search-forward (concat "^%" section "\\b") nil t)
+   (let ((s (cdr rpm-sections)))
+     (while (not (equal section (car s)))
+       (re-search-forward (concat "^%" (car s) "\\b") nil t)
+       (setq s (cdr s)))
+     (if (re-search-forward rpm-section-regexp nil t)
+         (forward-line -1) (goto-char (point-max)))
+     (insert "\n%" section "\n"))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TODO                                                           ;;
@@ -499,6 +891,10 @@ Special commands:
    (concat "rpm-mode version "
            rpm-mode-version
            " by Togan Muftuoglu <toganm@opensuse.org> ")))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.spec\\'" . rpm-mode))
+
 
 (provide 'rpm-mode)
 ;;; rpm-mode.el ends here
