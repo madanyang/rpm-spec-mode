@@ -499,6 +499,19 @@ BuildRequires:  baz"
    ;; show error buffer?
    t))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; from elisp-autobuild.pl ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun remove-leading-plusses ()
+  "Strip leading `+' characters from the working buffer.  This is
+useful when copying and pasting diff output directly."
+  (interactive)
+  (let ((old-pnt (point-marker)))
+    (beginning-of-buffer)
+    (replace-regexp "^+" "")
+    (goto-char old-pnt)
+    (message "I am feeling nonplussed.")))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
