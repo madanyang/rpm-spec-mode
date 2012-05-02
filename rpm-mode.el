@@ -473,12 +473,13 @@ BuildRequires:  baz"
       (message "You can only run rpm-br-split on a line that starts with BuildRequires:"))))
 
 
-;; (defun run-spec-beautifier ()
-;;   "Run an inferior spec-beautifier process, with I/O via buffer *spec-beautifier*."
-;;   (interactive)
-;;   (require 'comint)
-;;   (switch-to-buffer (make-comint "spec-beautifier" "spec-beautifier" "-r" ))
-;;   (inferior-spec-beautifier-mode))
+(defun run-spec-beautifier ()
+  "Run spec-beautifier obn the current file and revert the buffer"
+  (interactive)
+  (shell-command
+   (format "spec-beautifier %s -r"
+           (shell-quote-argument (buffer-file-name))))
+  (revert-buffer t t t))
 
 
 (defun rpm-tidy-spec ()
