@@ -54,6 +54,7 @@
     (define-key map "\C-c\C-br" 'rpm-br-split)
     (define-key map "\C-c\C-ld" 'rpm-ldconfig)
     (define-key map "\C-c\C-ts" 'rpm-tidy-spec)
+    (define-key map "\C-c\C-cs" 'rpm-clean-spec)
     map)
   "Keymap for `rpm-mode'.")
 
@@ -105,6 +106,7 @@
      ("Conflicts")
      ("%description")
      ("Enhances")
+     ("ExcludeArch")
      ("%files")
      ("Group")
      ("%ifarch")
@@ -489,6 +491,32 @@ BuildRequires:  baz"
 	   (shell-quote-argument (buffer-file-name))))
   (revert-buffer t t t))
 
+(defun run-spec-cleaner ()
+  "Run spec-cleaner on the current file and revert the buffer"
+  (interactive)
+  (shell-command
+   (format "spec-cleaner -i %s "
+	   (shell-quote-argument (buffer-file-name))))
+  (revert-buffer t t t))
+
+
+(defun rpm-clean-spec ()
+  "Cleans the spec content in the buffer using `spec-cleaner'"
+  (interactive)
+  (shell-command-on-region
+   ;; beginning and end of buffer
+   (point-min)
+   (point-max)
+   ;; command and parameters
+   "spec-beautifier -i"
+   ;; output buffer
+   (current-buffer)
+   ;; replace?
+   t
+   ;; name of the error buffer
+   "*Spec-cleaner Error Buffer*"
+   ;; show error buffer?
+   t))
 
 (defun rpm-tidy-spec ()
   "Tidies the spec content in the buffer using `spec-beautifier'"

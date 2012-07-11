@@ -8,7 +8,7 @@ When initializing the spec make sure to follow [[http://en.opensuse.org/openSUSE
 
     [ ] if possible create spec template for major packages as outlined in 
    [[ http://en.opensuse.org/openSUSE:Specfile_guidelines][openSUSE Specfile Guidelines]]
-*** TODO spec License
+*** TODO [#B] spec License
     [ ] create a license for the spec file itself as below using package name default for spec file 
       with current year and either get osc user full name and email or make it as an option
       to configure. By default it should be set to user name and email address as
