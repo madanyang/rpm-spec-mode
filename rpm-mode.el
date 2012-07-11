@@ -23,7 +23,7 @@
 ;;  Writing rpm spec files can sometimes be a tedious job. This major mode
 ;;  tries to bring ease to the process of creating specs for openSUSE rpm
 ;;  packages. It tries to follow the packaging guidelines of the
-;;  project and does not replace osc commands. 
+;;  project and does not replace osc commands.
 ;;
 ;;  This major mode is based on ideas and some code from the rpm-spec-mode
 ;;  and is so attributed where necessary
@@ -54,6 +54,7 @@
     (define-key map "\C-c\C-br" 'rpm-br-split)
     (define-key map "\C-c\C-ld" 'rpm-ldconfig)
     (define-key map "\C-c\C-ts" 'rpm-tidy-spec)
+    (define-key map "\C-c\C-cs" 'rpm-clean-spec)
     map)
   "Keymap for `rpm-mode'.")
 
@@ -105,6 +106,7 @@
      ("Conflicts")
      ("%description")
      ("Enhances")
+     ("ExcludeArch")
      ("%files")
      ("Group")
      ("%ifarch")
@@ -393,7 +395,7 @@
 
 (defvar rpm-tags-regexp
   (concat "\\(\\<" (regexp-opt (mapcar 'car rpm-tags-list))
-	  "\\|\\(Patch\\|Source\\)[0-9]+\\>\\)")
+          "\\|\\(Patch\\|Source\\)[0-9]+\\>\\)")
   "Regular expression for matching valid tags.")
 
 
@@ -432,7 +434,7 @@ For detail, see `comment-dwim'."
 
 (defun rpm-ldconfig ()
   "Replace `%run_ldconfig', which is deprecated, with direct calls to `/sbin/ldconfig'."
-  (interactive)          
+  (interactive)
   (let ((old-pnt (point-marker)))
     (beginning-of-buffer)
     (replace-string "%run_ldconfig" "/sbin/ldconfig")
@@ -474,13 +476,39 @@ BuildRequires:  baz"
 
 
 (defun run-spec-beautifier ()
-  "Run spec-beautifier obn the current file and revert the buffer"
+  "Run spec-beautifier on the current file and revert the buffer"
   (interactive)
   (shell-command
    (format "spec-beautifier %s -r"
            (shell-quote-argument (buffer-file-name))))
   (revert-buffer t t t))
 
+(defun run-spec-cleaner ()
+  "Run spec-cleaner on the current file and revert the buffer"
+  (interactive)
+  (shell-command
+   (format "spec-cleaner -i %s "
+           (shell-quote-argument (buffer-file-name))))
+  (revert-buffer t t t))
+
+
+(defun rpm-clean-spec ()
+  "Cleans the spec content in the buffer using `spec-cleaner'"
+  (interactive)
+  (shell-command-on-region
+   ;; beginning and end of buffer
+   (point-min)
+   (point-max)
+   ;; command and parameters
+   "spec-beautifier -i"
+   ;; output buffer
+   (current-buffer)
+   ;; replace?
+   t
+   ;; name of the error buffer
+   "*Spec-cleaner Error Buffer*"
+   ;; show error buffer?
+   t))
 
 (defun rpm-tidy-spec ()
   "Tidies the spec content in the buffer using `spec-beautifier'"
@@ -524,9 +552,9 @@ useful when copying and pasting diff output directly."
 
 (require 'ffap)
 (defun rpm-ffap (name)
-  (ffap-locate-file name '("" ".gz" ".bz2") (rpm_getwd))) 
- ;              '("./" "../SOURCES")))              
-(add-to-list 'ffap-alist 
+  (ffap-locate-file name '("" ".gz" ".bz2") (rpm_getwd)))
+ ;              '("./" "../SOURCES")))
+(add-to-list 'ffap-alist
           '(rpm-mode . rpm-ffap))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -540,8 +568,8 @@ useful when copying and pasting diff output directly."
 (defun rpm-insert-patch ()
   (interactive)
   (goto-char (point-min))
-  (let* ((file 
-     (completing-read 
+  (let* ((file
+     (completing-read
       "Patch: "
       (mapcar (function (lambda (rule) (list rule)))
             (directory-files (rpm_getwd) nil "^\\([_-0-9a-zA-Z]+\\).''\\.patch.'''"))) )
@@ -549,12 +577,12 @@ useful when copying and pasting diff output directly."
        (count 0)
        )
    (goto-char (point-min))
-   (while (search-forward-regexp "^Patch?\\([0-9]+\\)?" max t) 
+   (while (search-forward-regexp "^Patch?\\([0-9]+\\)?" max t)
      (if (> (string-to-number (match-string 1)) count)
         (setq count (string-to-number (match-string 1)))
       )
      )
-   (if (eq count 0) (while (search-forward-regexp "^Source?\\([0-9]+\\)?" max t)()))   
+   (if (eq count 0) (while (search-forward-regexp "^Source?\\([0-9]+\\)?" max t)()))
    (setq count (1+ count))
    (end-of-line)
    (insert (format "\n%s%d%s%s" "Patch" count ": " file))
@@ -572,16 +600,16 @@ useful when copying and pasting diff output directly."
         (version (rpm-field-value "version" nil))
         (string)
         )
-     (cond ((string-match 
+     (cond ((string-match
            (concat "^" (regexp-quote (format "%s-%s-" name version))
                  "\\([^.]*\\)\\(\\.patch\\.bz2\\)") file)
-          (setq string (format "%s%s" "-b ." 
+          (setq string (format "%s%s" "-b ."
                           (substring file (match-beginning 1) (match-end 1)))))
-         ((string-match 
+         ((string-match
            (concat "^" (regexp-quote (format "%s-" name version))
                  ".''[0-9]+-" "\\([^.]'''\\)\\(\\.patch\\.bz2\\)") file)
-          (setq string 
-               (format "%s%s" "-b ." 
+          (setq string
+               (format "%s%s" "-b ."
                      (substring file (match-beginning 1) (match-end 1)))))
          )
      (if string
@@ -643,11 +671,11 @@ existing changelog entries."
       ;; Slap an extra newline after email addresses
       (beginning-of-buffer)
       (replace-regexp "^\*.* - .*@.*\.*$" "\\& \n")
-      
+
       ;; Replace "* " with a bunch of dashes
       (beginning-of-buffer)
       (replace-regexp "^\* " "\n-------------------------------------------------------------------\n")
-      
+
       (goto-char old-pnt))))
 
 
@@ -792,7 +820,7 @@ controls whether case is significant."
 
 
 (defun rpm-view-changelog ()
-  "something like \"less foo.changes\""  
+  "something like \"less foo.changes\""
   (interactive)
 
   (let ((filename (format "%s.changes" (rpm_getwd))))
@@ -912,5 +940,3 @@ Special commands:
 
 (provide 'rpm-mode)
 ;;; rpm-mode.el ends here
-
-
