@@ -1752,4 +1752,5 @@ if one is present in the file."
 (define-compilation-mode rpmbuild-mode "RPM build" ""
   (set (make-local-variable 'compilation-disable-input) t))
 
+(setq-default rpm-change-log-uses-utc t)
 ;;; rpm-spec-mode.el ends here
